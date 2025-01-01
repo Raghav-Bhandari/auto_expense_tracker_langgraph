@@ -1,17 +1,28 @@
 from typing import Optional
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-# from langchain.chat_models import ChatOpenAI
 from langchain_openai import ChatOpenAI
 from models import ParsedExpense
 from dotenv import load_dotenv
 import os
 
 EXPENSE_PROMPT = """Extract expense information from the following text. If any information is missing, leave those fields as null.
+
 The output should be in JSON format with the following fields:
-- title: The item or service purchased
-- amount: The cost as a number (without currency symbols)
-- category: The type of expense (e.g., food, transport, entertainment)
+- title: The item or service purchased (extract and give consice but explainatory title name for the activity or item) 
+- amount: The cost as a number (extract only the number, no currency symbols)
+- category: The type of expense (must be one of: rent/utilities, transport, entertainment, outside_food, misc)
+
+Rules for extraction:
+1. If an amount is mentioned (like "rs", "rupees", or just a number), extract it
+2. Look for action words or items to determine the title
+3. Automatically categorize based on the activity:
+   - Groceries/house rent/cleaning -> rent/utilities
+   - Food/drinks/restaurants -> outside_food
+   - Travel/rides/commute -> transport
+   - Movies/shows/activities -> entertainment
+   - Everything else -> misc
+4. If you can't determine the category with certainty, set it to null
 
 Text: {input_text}
 
